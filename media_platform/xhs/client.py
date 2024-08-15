@@ -108,11 +108,17 @@ class XiaoHongShuClient(AbstractApiClient):
         Returns:
 
         """
+        print(">>>>>>>>>>>>start headers")
+
+        
         final_uri = uri
         if isinstance(params, dict):
             final_uri = (f"{uri}?"
                          f"{urlencode(params)}")
         headers = await self._pre_headers(final_uri)
+        print(final_uri)
+        print(headers)
+        print("<<<<<<<<<<<<end headers")
         return await self.request(method="GET", url=f"{self._host}{final_uri}", headers=headers)
 
     async def post(self, uri: str, data: dict, **kwargs) -> Dict:

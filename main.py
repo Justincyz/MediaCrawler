@@ -1,7 +1,8 @@
-import asyncio
 import sys
+import asyncio
+from PyQt5 import QtWidgets, QtCore
+from PyQt5.QtWidgets import QMessageBox
 
-import cmd_arg
 import config
 import db
 from base.base_crawler import AbstractCrawler
@@ -11,63 +12,16 @@ from media_platform.kuaishou import KuaishouCrawler
 from media_platform.tieba import TieBaCrawler
 from media_platform.weibo import WeiboCrawler
 from media_platform.xhs import XiaoHongShuCrawler
-from tkinter import ttk, messagebox
-import tkinter as tk
 from tools.utils import str2bool
 
-# class CrawlerFactory:
-#     CRAWLERS = {
-#         "xhs": XiaoHongShuCrawler,
-#         "dy": DouYinCrawler,
-#         "ks": KuaishouCrawler,
-#         "bili": BilibiliCrawler,
-#         "wb": WeiboCrawler,
-#         "tieba": TieBaCrawler
-#     }
-
-#     @staticmethod
-#     def create_crawler(platform: str) -> AbstractCrawler:
-#         crawler_class = CrawlerFactory.CRAWLERS.get(platform)
-#         if not crawler_class:
-#             raise ValueError("Invalid Media Platform Currently only supported xhs or dy or ks or bili ...")
-#         return crawler_class()
-
-
-# async def main():
-#     # parse cmd
-#     await cmd_arg.parse_cmd()
-
-#     # init db
-#     if config.SAVE_DATA_OPTION == "db":
-#         await db.init_db()
-
-#     crawler = CrawlerFactory.create_crawler(platform=config.PLATFORM)
-#     await crawler.start()
-
-#     if config.SAVE_DATA_OPTION == "db":
-#         await db.close()
-
-
-# if __name__ == '__main__':
-#     try:
-#         # asyncio.run(main())
-#         asyncio.get_event_loop().run_until_complete(main())
-#     except KeyboardInterrupt:
-#         sys.exit()
-
-
-# import asyncio
-# import tkinter as tk
-# from tkinter import ttk, messagebox
-# import config
-# from tools.utils import str2bool
-# from media_platform.bilibili import BilibiliCrawler
-# from media_platform.douyin import DouYinCrawler
-# from media_platform.kuaishou import KuaishouCrawler
-# from media_platform.tieba import TieBaCrawler
-# from media_platform.weibo import WeiboCrawler
-# from media_platform.xhs import XiaoHongShuCrawler
-# import db
+platform_dict = {
+    "小红书": "xhs",
+    "抖音": "dy",
+    "快手": "ks",
+    "Bilibili": "bili",
+    "微博": "wb",
+    "贴吧": "tieba"
+}
 
 class CrawlerFactory:
     CRAWLERS = {
@@ -88,91 +42,110 @@ class CrawlerFactory:
 
 async def run_crawler():
     try:
-        # 初始化数据库
         if config.SAVE_DATA_OPTION == "db":
             await db.init_db()
-        print("start")
-        root.title("Crawler is running...")
+
         crawler = CrawlerFactory.create_crawler(platform=config.PLATFORM)
         await crawler.start()
-        print("end")
+
         if config.SAVE_DATA_OPTION == "db":
             await db.close()
     except Exception as e:
         print(f"An error occurred: {e}")
-        messagebox.showerror("Error", f"An error occurred: {e}")
 
-def start_crawler():
-    
-    parse_cmd()
-    # 在事件循环中创建异步任务
-    asyncio.run(run_crawler())
-    root.title("Media Crawler Program")
+class CrawlerApp(QtWidgets.QWidget):
+    def __init__(self):
+        super().__init__()
 
-def parse_cmd():
-    # 获取用户输入的值并更新配置
-    config.PLATFORM = platform_var.get()
-    config.LOGIN_TYPE = lt_var.get()
-    config.CRAWLER_TYPE = type_var.get()
-    config.START_PAGE = int(start_page_var.get())
-    config.KEYWORDS = keywords_var.get()
-    config.ENABLE_GET_COMMENTS = str2bool(get_comment_var.get())
-    config.ENABLE_GET_SUB_COMMENTS = str2bool(get_sub_comment_var.get())
-    config.SAVE_DATA_OPTION = save_data_option_var.get()
-    config.COOKIES = cookies_var.get()
+        self.init_ui()
 
+    def init_ui(self):
+        # 创建并设置布局
+        layout = QtWidgets.QGridLayout()
 
+        # 平台选择
+        layout.addWidget(QtWidgets.QLabel('选择平台:'), 0, 0)
+        self.platform_var = QtWidgets.QComboBox()
+        self.platform_var.addItems(["小红书", "抖音", "快手", "Bilibili", "微博", "贴吧"])
+        layout.addWidget(self.platform_var, 0, 1)
 
-def run_gui():
-    global platform_var, lt_var, type_var, start_page_var, keywords_var, root
-    global get_comment_var, get_sub_comment_var, save_data_option_var, cookies_var
+        # 登录类型
+        layout.addWidget(QtWidgets.QLabel('登录类型:'), 1, 0)
+        self.lt_var = QtWidgets.QComboBox()
+        self.lt_var.addItems(["qrcode", "phone", "cookie"])
+        layout.addWidget(self.lt_var, 1, 1)
 
-    root = tk.Tk()
-    root.title("Media Crawler Program")
+        # 爬虫类型
+        layout.addWidget(QtWidgets.QLabel('爬虫类型:'), 2, 0)
+        self.type_var = QtWidgets.QComboBox()
+        self.type_var.addItems(["search", "detail", "creator"])
+        layout.addWidget(self.type_var, 2, 1)
 
-    # 创建各个界面元素
-    ttk.Label(root, text="选择平台:").grid(row=0, column=0, sticky=tk.W)
-    platform_var = tk.StringVar(value=config.PLATFORM)
-    ttk.Combobox(root, textvariable=platform_var, values=["xhs", "dy", "ks", "bili", "wb", "tieba"]).grid(row=0, column=1, padx=10, pady=5)
+        # 起始页
+        layout.addWidget(QtWidgets.QLabel('起始页:'), 3, 0)
+        self.start_page_var = QtWidgets.QLineEdit(str(config.START_PAGE))
+        layout.addWidget(self.start_page_var, 3, 1)
 
-    ttk.Label(root, text="登录类型:").grid(row=1, column=0, sticky=tk.W)
-    lt_var = tk.StringVar(value=config.LOGIN_TYPE)
-    ttk.Combobox(root, textvariable=lt_var, values=["qrcode", "phone", "cookie"]).grid(row=1, column=1, padx=10, pady=5)
+        # 关键词
+        layout.addWidget(QtWidgets.QLabel('关键词:'), 4, 0)
+        self.keywords_var = QtWidgets.QLineEdit(config.KEYWORDS)
+        layout.addWidget(self.keywords_var, 4, 1)
 
-    ttk.Label(root, text="爬虫类型:").grid(row=2, column=0, sticky=tk.W)
-    type_var = tk.StringVar(value=config.CRAWLER_TYPE)
-    ttk.Combobox(root, textvariable=type_var, values=["search", "detail", "creator"]).grid(row=2, column=1, padx=10, pady=5)
+        # 抓取一级评论
+        layout.addWidget(QtWidgets.QLabel('抓取一级评论:'), 5, 0)
+        self.get_comment_var = QtWidgets.QComboBox()
+        self.get_comment_var.addItems(["yes", "no"])
+        layout.addWidget(self.get_comment_var, 5, 1)
 
-    ttk.Label(root, text="起始页:").grid(row=3, column=0, sticky=tk.W)
-    start_page_var = tk.StringVar(value=str(config.START_PAGE))
-    tk.Entry(root, textvariable=start_page_var).grid(row=3, column=1, padx=10, pady=5)
+        # 抓取二级评论
+        layout.addWidget(QtWidgets.QLabel('抓取二级评论:'), 6, 0)
+        self.get_sub_comment_var = QtWidgets.QComboBox()
+        self.get_sub_comment_var.addItems(["yes", "no"])
+        layout.addWidget(self.get_sub_comment_var, 6, 1)
 
-    ttk.Label(root, text="关键词:").grid(row=4, column=0, sticky=tk.W)
-    keywords_var = tk.StringVar(value=config.KEYWORDS)
-    tk.Entry(root, textvariable=keywords_var).grid(row=4, column=1, padx=10, pady=5)
+        # 数据保存方式
+        layout.addWidget(QtWidgets.QLabel('数据保存方式:'), 7, 0)
+        self.save_data_option_var = QtWidgets.QComboBox()
+        self.save_data_option_var.addItems(["csv", "db", "json"])
+        layout.addWidget(self.save_data_option_var, 7, 1)
 
-    ttk.Label(root, text="抓取一级评论:").grid(row=5, column=0, sticky=tk.W)
-    get_comment_var = tk.StringVar(value=str(config.ENABLE_GET_COMMENTS))
-    ttk.Combobox(root, textvariable=get_comment_var, values=["yes", "no"]).grid(row=5, column=1, padx=10, pady=5)
+        # Cookies
+        layout.addWidget(QtWidgets.QLabel('Cookies:'), 8, 0)
+        self.cookies_var = QtWidgets.QLineEdit(config.COOKIES)
+        layout.addWidget(self.cookies_var, 8, 1)
 
-    ttk.Label(root, text="抓取二级评论:").grid(row=6, column=0, sticky=tk.W)
-    get_sub_comment_var = tk.StringVar(value=str(config.ENABLE_GET_SUB_COMMENTS))
-    ttk.Combobox(root, textvariable=get_sub_comment_var, values=["yes", "no"]).grid(row=6, column=1, padx=10, pady=5)
+        # 运行按钮
+        self.run_button = QtWidgets.QPushButton('运行')
+        self.run_button.clicked.connect(self.start_crawler)
+        layout.addWidget(self.run_button, 9, 0, 1, 2)
 
-    ttk.Label(root, text="数据保存方式:").grid(row=7, column=0, sticky=tk.W)
-    save_data_option_var = tk.StringVar(value=config.SAVE_DATA_OPTION)
-    ttk.Combobox(root, textvariable=save_data_option_var, values=["csv", "db", "json"]).grid(row=7, column=1, padx=10, pady=5)
+        self.setLayout(layout)
+        self.setWindowTitle('Media Crawler Program')
 
-    ttk.Label(root, text="Cookies:").grid(row=8, column=0, sticky=tk.W)
-    cookies_var = tk.StringVar(value=config.COOKIES)
-    tk.Entry(root, textvariable=cookies_var).grid(row=8, column=1, padx=10, pady=5)
+    def parse_cmd(self):
+        config.PLATFORM = platform_dict[self.platform_var.currentText()]
+        config.LOGIN_TYPE = self.lt_var.currentText()
+        config.CRAWLER_TYPE = self.type_var.currentText()
+        config.START_PAGE = int(self.start_page_var.text())
+        config.KEYWORDS = self.keywords_var.text()
+        config.ENABLE_GET_COMMENTS = str2bool(self.get_comment_var.currentText())
+        config.ENABLE_GET_SUB_COMMENTS = str2bool(self.get_sub_comment_var.currentText())
+        config.SAVE_DATA_OPTION = self.save_data_option_var.currentText()
+        config.COOKIES = self.cookies_var.text()
+        print(config.PLATFORM)
 
-    tk.Button(root, text="运行", command=start_crawler).grid(row=9, column=0, columnspan=2, pady=10)
-    #button = tk.Button(root, text="运行", command=button_clicked).grid(row=9, column=0, columnspan=2, pady=10)
+    def start_crawler(self):
+        self.parse_cmd()
+        self.run_button.setEnabled(False)  # 禁用按钮防止重复点击
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(run_crawler())
+        self.run_button.setEnabled(True)  # 任务完成后重新启用按钮
 
-    print("reach")
-    root.mainloop()
-
+def run_app():
+    app = QtWidgets.QApplication(sys.argv)
+    crawler_app = CrawlerApp()
+    crawler_app.show()
+    sys.exit(app.exec_())
 
 if __name__ == '__main__':
-    run_gui()
+    run_app()

@@ -110,6 +110,7 @@ class XiaoHongShuCrawler(AbstractCrawler):
                         page=page,
                         sort=SearchSortType(config.SORT_TYPE) if config.SORT_TYPE != '' else SearchSortType.GENERAL,
                     )
+                    #OPTIONAL
                     #utils.logger.info(f"[XiaoHongShuCrawler.search] Search notes res:{notes_res}")
                     if not notes_res or not notes_res.get('has_more', False):
                         utils.logger.info("No more content!")
