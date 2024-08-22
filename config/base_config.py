@@ -52,12 +52,22 @@ ENABLE_GET_COMMENTS = False
 # 老版本项目使用了 db, 则需参考 schema/tables.sql line 287 增加表字段
 ENABLE_GET_SUB_COMMENTS = False
 
+##小红书模块
 # 指定小红书需要爬虫的笔记ID列表
 XHS_SPECIFIED_ID_LIST = [
     "6422c2750000000027000d88",
     # ........................
 ]
 
+# 指定小红书需要留言的笔记ID列表
+XHS_NOTEID_LIST_FOR_COMMENTS = [
+    "669a0f250000000025004777",
+    # ........................
+]
+# 根据小红书需要留言的笔记ID列表，做出小红书需要留言的内容
+XHS_POST_COMMENTS_CONTENT = ""
+
+##抖音模块
 # 指定抖音需要爬取的ID列表
 DY_SPECIFIED_ID_LIST = [
     "7280854932641664319",
@@ -134,3 +144,6 @@ STOP_WORDS_FILE = "./docs/hit_stopwords.txt"
 
 # 中文字体文件路径
 FONT_PATH = "./docs/STZHONGS.TTF"
+
+
+

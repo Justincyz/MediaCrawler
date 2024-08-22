@@ -18,6 +18,7 @@ from .client import XiaoHongShuClient
 from .exception import DataFetchError
 from .field import SearchSortType
 from .login import XiaoHongShuLogin
+from constant.drop_down_selection import * 
 
 
 class XiaoHongShuCrawler(AbstractCrawler):
@@ -72,15 +73,17 @@ class XiaoHongShuCrawler(AbstractCrawler):
                 await self.xhs_client.update_cookies(browser_context=self.browser_context)
 
             crawler_type_var.set(config.CRAWLER_TYPE)
-            if config.CRAWLER_TYPE == "search":
+            if config.CRAWLER_TYPE == HomeDropdownMenu.SEARCH_NOTE:
                 # Search for notes and retrieve their comment information.
                 await self.search()
-            elif config.CRAWLER_TYPE == "detail":
+            elif config.CRAWLER_TYPE == HomeDropdownMenu.GET_NOTE_DETAIL_AND_COMMENTS:
                 # Get the information and comments of the specified post
                 await self.get_specified_notes()
-            elif config.CRAWLER_TYPE == "creator":
+            elif config.CRAWLER_TYPE == HomeDropdownMenu.GET_CREATOR_INFO_AND_NOTES_COMMENTS:
                 # Get creator's information and their notes and comments
                 await self.get_creators_and_notes()
+            elif config.CRAWLER_TYPE == HomeDropdownMenu.POST_COMMENT_UNDER_NOTE:
+                await self.post_comments_under_notes()
             else:
                 pass
 
@@ -186,9 +189,6 @@ class XiaoHongShuCrawler(AbstractCrawler):
             async with semaphore:
                 try:
                     _note_detail: Dict = await self.xhs_client.get_note_by_id_from_html(note_id)
-                    print("------------------------")
-                    print(_note_detail)
-                    print("------------------------")
                     if not _note_detail:
                         utils.logger.error(
                             f"[XiaoHongShuCrawler.get_note_detail_from_html] Get note detail error, note_id: {note_id}")
@@ -259,6 +259,22 @@ class XiaoHongShuCrawler(AbstractCrawler):
                 crawl_interval=random.random(),
                 callback=xhs_store.batch_update_xhs_note_comments
             )
+
+    #TODO YC
+    #post comment under selected notes
+    async def post_comments_under_notes(self) -> None:
+        utils.logger.info("[XiaoHongShuCrawler.post_comments_under_notes] Begin posting comments")
+        for note_id in config.XHS_NOTEID_LIST_FOR_COMMENTS:
+             async with asyncio.Semaphore(config.MAX_CONCURRENCY_NUM):
+                try:
+                    #_note_detail: Dict = await self.xhs_client.get_note_by_id_from_html(note_id)
+                    await self.xhs_client.post_comments_by_noteId(note_id, config.XHS_POST_COMMENTS_CONTENT)
+                except KeyError as ex:
+                    utils.logger.error(
+                        f"[XiaoHongShuCrawler.get_note_detail_from_html] have not fund note detail note_id:{note_id}, err: {ex}")
+                    return {}
+        utils.logger.info("[XiaoHongShuCrawler.post_comments_under_notes] Finished posting comments")
+
 
     @staticmethod
     def format_proxy_info(ip_proxy_info: IpInfoModel) -> Tuple[Optional[Dict], Optional[Dict]]:

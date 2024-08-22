@@ -13,6 +13,7 @@ from media_platform.tieba import TieBaCrawler
 from media_platform.weibo import WeiboCrawler
 from media_platform.xhs import XiaoHongShuCrawler
 from tools.utils import str2bool
+from constant.drop_down_selection import * 
 
 platform_dict = {
     "小红书": "xhs",
@@ -78,7 +79,10 @@ class CrawlerApp(QtWidgets.QWidget):
         # 爬虫类型
         layout.addWidget(QtWidgets.QLabel('爬虫类型:'), 2, 0)
         self.type_var = QtWidgets.QComboBox()
-        self.type_var.addItems(["search", "detail", "creator"])
+        self.type_var.addItems([HomeDropdownMenu.SEARCH_NOTE, 
+                                HomeDropdownMenu.GET_NOTE_DETAIL_AND_COMMENTS, 
+                                HomeDropdownMenu.GET_CREATOR_INFO_AND_NOTES_COMMENTS, 
+                                HomeDropdownMenu.POST_COMMENT_UNDER_NOTE])
         layout.addWidget(self.type_var, 2, 1)
 
         # 起始页
@@ -90,6 +94,7 @@ class CrawlerApp(QtWidgets.QWidget):
         layout.addWidget(QtWidgets.QLabel('关键词:'), 4, 0)
         self.keywords_var = QtWidgets.QLineEdit(config.KEYWORDS)
         layout.addWidget(self.keywords_var, 4, 1)
+
 
         # 抓取一级评论
         layout.addWidget(QtWidgets.QLabel('抓取一级评论:'), 5, 0)
@@ -114,10 +119,24 @@ class CrawlerApp(QtWidgets.QWidget):
         self.cookies_var = QtWidgets.QLineEdit(config.COOKIES)
         layout.addWidget(self.cookies_var, 8, 1)
 
+        #TODO: test for xhs
+        #为某一条帖子进行评论
+        layout.addWidget(QtWidgets.QLabel('小红书帖子ID:'), 9, 0)
+        #self.xhs_noteId_list_for_comments = QtWidgets.QLineEdit(config.XHS_NOTEID_LIST_FOR_COMMENTS)
+        self.xhs_noteId_list_for_comments = QtWidgets.QListWidget()
+        
+        self.xhs_noteId_list_for_comments.addItems(config.XHS_NOTEID_LIST_FOR_COMMENTS)
+        layout.addWidget(self.xhs_noteId_list_for_comments, 9, 1)
+
+        #帖子内容
+        layout.addWidget(QtWidgets.QLabel('评论内容'), 10, 0)
+        self.xhs_post_comments_content = QtWidgets.QLineEdit(config.XHS_POST_COMMENTS_CONTENT)
+        layout.addWidget(self.xhs_post_comments_content, 10, 1)
+
         # 运行按钮
         self.run_button = QtWidgets.QPushButton('运行')
         self.run_button.clicked.connect(self.start_crawler)
-        layout.addWidget(self.run_button, 9, 0, 1, 2)
+        layout.addWidget(self.run_button, 11, 0, 1, 2)
 
         self.setLayout(layout)
         self.setWindowTitle('Media Crawler Program')
@@ -132,6 +151,7 @@ class CrawlerApp(QtWidgets.QWidget):
         config.ENABLE_GET_SUB_COMMENTS = str2bool(self.get_sub_comment_var.currentText())
         config.SAVE_DATA_OPTION = self.save_data_option_var.currentText()
         config.COOKIES = self.cookies_var.text()
+        config.XHS_POST_COMMENTS_CONTENT = self.xhs_post_comments_content.text()
         print(config.PLATFORM)
 
     def start_crawler(self):

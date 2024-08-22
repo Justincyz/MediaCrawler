@@ -91,6 +91,7 @@ class XiaoHongShuClient(AbstractApiClient):
         if return_response:
             return response.text
         data: Dict = response.json()
+
         if data["success"]:
             return data.get("data", data.get("success", {}))
         elif data["code"] == self.IP_ERROR_CODE:
@@ -116,8 +117,7 @@ class XiaoHongShuClient(AbstractApiClient):
             final_uri = (f"{uri}?"
                          f"{urlencode(params)}")
         headers = await self._pre_headers(final_uri)
-        print(final_uri)
-        print(headers)
+
         print("<<<<<<<<<<<<end headers")
         return await self.request(method="GET", url=f"{self._host}{final_uri}", headers=headers)
 
@@ -131,10 +131,17 @@ class XiaoHongShuClient(AbstractApiClient):
         Returns:
 
         """
+        
+        
         headers = await self._pre_headers(uri, data)
+   
         json_str = json.dumps(data, separators=(',', ':'), ensure_ascii=False)
+        
+        #new_url = "https://customer.xiaohongshu.com"
+        # return await self.request(method="POST", url=f"{self._host}{uri}",
+        #                           data=json_str, headers=headers, **kwargs)
         return await self.request(method="POST", url=f"{self._host}{uri}",
-                                  data=json_str, headers=headers, **kwargs)
+                                   data=json_str.encode("utf-8"), headers=headers, **kwargs)
 
     async def get_note_media(self, url: str) -> Union[bytes, None]:
         async with httpx.AsyncClient(proxies=self.proxies) as client:
@@ -489,3 +496,25 @@ class XiaoHongShuClient(AbstractApiClient):
             note_dict = transform_json_keys(state)
             return note_dict["note"]["note_detail_map"][note_id]["note"]
         raise DataFetchError(html)
+    
+
+    async def post_comments_by_noteId(self, note_id: str, comment_content: str) -> Dict:
+        """
+        在指定帖子下评论内容
+        Returns:
+
+        """
+        uri = "/api/sns/web/v1/comment/post"
+        data = {
+            "note_id": note_id,
+            "content": comment_content,
+            "at_users": []
+        }
+        response = await self.post(uri, data)
+        print(response)
+        result = await self.get_note_all_comments('669a0f250000000025004777')
+        print(result)
+    
+
+
+    
